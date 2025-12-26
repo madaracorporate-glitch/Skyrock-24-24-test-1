@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skyrock H24 - Stratégie de Conquête</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            color: white;
+            scroll-behavior: smooth;
+        }
+        html { font-size: 115%; }
+        .font-sky { font-family: 'Montserrat', sans-serif; text-transform: uppercase; }
+        .sky-red { color: #ed1c24; }
+        .bg-sky-red { background-color: #ed1c24; }
+        .twitch-purple { color: #9146ff; }
+        
+        .glass {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .slide-in {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .slide-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #ed1c24, #9146ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Compact vertical spacing: limiter l'espace entre les slides (encore réduit) */
+        section {
+            padding-top: clamp(24px, 3vh, 40px) !important;
+            padding-bottom: clamp(24px, 3vh, 40px) !important;
+        }
+        section + section { margin-top: 0 !important; }
+        [class*="min-h-screen"] { min-height: 68vh; }
+        /* Compact layout overrides */
+        :root {
+            --compact-6xl: 1100px;
+            --compact-7xl: 1240px;
+        }
+        .max-w-6xl { max-width: var(--compact-6xl); }
+        .max-w-7xl { max-width: var(--compact-7xl); }
+        /* Micro-animations et hover global pour donner du relief */
+        .card-anim {
+            transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
+        }
+        .card-anim:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 15px 45px rgba(237, 28, 36, 0.15);
+            border-color: #ed1c24 !important;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        @keyframes floaty {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .logo-float {
+            position: fixed;
+            top: 96px;
+            right: 24px;
+            z-index: 40;
+            width: 72px;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ed1c24;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            transition: transform 0.25s ease-out;
+            overflow: hidden;
+        }
+        .logo-float img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .highlight-card {
+            border-left: 4px solid #ed1c24;
+            background: linear-gradient(90deg, rgba(237, 28, 36, 0.1) 0%, transparent 100%);
+        }
+        .danger-card {
+            border-left: 4px solid #facc15;
+            background: rgba(250, 204, 21, 0.05);
+        }
+        .ai-glow {
+            box-shadow: 0 0 20px rgba(145, 70, 255, 0.3);
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            border-color: #ed1c24;
+            background: rgba(237, 28, 36, 0.05);
+        }
+        .logo {
+            filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
+        }
+        .typing-caret {
+            display: inline-block;
+            width: 0.6ch;
+        }
+        .typing-caret.blink {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        .pill {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 10px;
+            font-weight: 800;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        /* Ligne verticale latérale pour repères Problème / Solution / Résultats */
+        .rail {
+            position: fixed;
+            left: 18px;
+            top: 18vh;
+            width: 2px;
+            height: 70vh;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%);
+            z-index: 50;
+        }
+        .rail-marker {
+            position: absolute;
+            left: -6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            border: 2px solid rgba(255,255,255,0.9);
+            background: #0b0b0b;
+            transition: transform 200ms ease, box-shadow 200ms ease;
+        }
+        .rail-marker:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+        }
+        .rail-label {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #fff;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            opacity: 0.75;
+        }
+        .rail-marker.probleme { border-color: #ef4444; }
+        .rail-marker.solution { border-color: #a855f7; }
+        .rail-marker.resultats { border-color: #22c55e; }
+        .rail-marker.active {
+            transform: scale(1.2);
+            box-shadow: 0 0 14px rgba(255, 255, 255, 0.5);
+        }
+        .rail-active-label {
+            position: fixed;
+            left: 32px;
+            top: 50%;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #fff;
+            z-index: 50;
+            opacity: 0.8;
+            transition: opacity 200ms ease, transform 250ms ease;
+        }
+        .rail-active-label.fade {
+            opacity: 0.35;
+            transform: translateY(-50%) translateX(-2px);
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- Header -->
+    <nav class="fixed top-0 w-full z-50 p-6 flex justify-between items-center glass">
+        <div class="flex items-center gap-3">
+            <img src="https://upload.wikimedia.org/wikipedia/fr/7/78/Logo_Skyrock_2015.svg" alt="Logo Skyrock" class="h-7 md:h-9 logo" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27180%27 height=%2760%27><rect width=%27180%27 height=%2760%27 fill=%27%23ed1c24%27/><text x=%2790%27 y=%2740%27 fill=%27white%27 font-family=%27Arial%27 font-size=%2724%27 font-weight=%27bold%27 text-anchor=%27middle%27>SKYROCK</text></svg>';">
+            <span class="text-xs font-bold tracking-widest opacity-70 hidden md:block text-white uppercase italic">Data-Offensive Janvier 2026</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-sky-red animate-pulse"></div>
+            <span class="text-[10px] font-black uppercase tracking-tighter">Audience & Parts de Marché</span>
+        </div>
+    </nav>
+    <!-- Floating animated logo -->
+    <div id="sky-logo-float" class="logo-float card-anim">
+        <img
+            src="https://upload.wikimedia.org/wikipedia/fr/7/78/Logo_Skyrock_2015.svg"
+            alt="Skyrock"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%2780%27><rect width=%27200%27 height=%2780%27 fill=%27%23ed1c24%27/><text x=%27100%27 y=%2750%27 fill=%27white%27 font-family=%27Arial%27 font-size=%2728%27 font-weight=%27bold%27 text-anchor=%27middle%27>SKYROCK</text></svg>';">
+    </div>
+    <!-- Ligne verticale latérale -->
+    <div class="hidden md:block rail">
+        <a href="#probleme-synthese" class="rail-marker probleme" style="top: 8%;"></a>
+        <a href="#ai-lab" class="rail-marker solution" style="top: 42%;"></a>
+        <a href="#resultats" class="rail-marker resultats" style="top: 78%;"></a>
+    </div>
+    <div class="hidden md:block rail-active-label" id="rail-label">PROBLÈME</div>
+
+    <!-- Slide 1: L'Électrochoc -->
+    <section class="min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20">
+        <h1 class="font-sky text-6xl md:text-9xl mb-4 slide-in leading-none">
+            REPRENDRE <br><span class="sky-red italic underline decoration-4">LE POUVOIR.</span>
+        </h1>
+        <p class="text-xl md:text-2xl opacity-60 max-w-3xl slide-in font-light">
+            22M de fans cumulés. Twitch vit 24/24 : captez-les sur un flux unique H24.
+        </p>
+        <div class="mt-12 slide-in flex gap-4">
+            <a href="#constat" class="bg-white text-black font-black px-8 py-4 rounded-full text-sm uppercase tracking-widest hover:bg-sky-red hover:text-white transition-all">L'Urgence en chiffres</a>
+            <a href="#hub" class="border border-white/20 text-white font-black px-8 py-4 rounded-full text-sm uppercase tracking-widest hover:bg-white/10 transition-all">La Stratégie Hub</a>
+        </div>
+        <div class="mt-4 slide-in flex flex-wrap gap-3 justify-center text-[11px] uppercase font-black opacity-70">
+            <span class="bg-white/5 px-4 py-2 rounded-full border border-white/10">Live 24/24 · 7/7</span>
+            <span class="bg-sky-red/20 px-4 py-2 rounded-full border border-sky-red/40 text-white">Algorithme toujours chaud</span>
+            <span class="bg-twitch-purple/20 px-4 py-2 rounded-full border border-twitch-purple/40 text-white">Raids & clips en continu</span>
+        </div>
+    </section>
+
+    <!-- Bande PROBLÈME -->
+    <section class="w-full bg-sky-red text-white text-center py-8 px-4">
+        <h2 class="font-sky text-3xl md:text-4xl italic uppercase">PROBLÈME</h2>
+        <p class="text-sm md:text-base opacity-90 mt-2 font-black">85% de l’audience mobile s’évapore entre 20h et 4h — Twitch capte la nuit.</p>
+        <p class="text-sm md:text-base opacity-80">Temps moyen Twitch : 95 min/jour · 82% des 15-24 sont “live-addicts”.</p>
+        <p class="text-xs md:text-sm opacity-70 mt-1">Skyrock est premier média urbain sur papier ; Twitch est premier média urbain dans la réalité des jeunes.</p>
+    </section>
+
+    <!-- Slide Problème Synthèse (double hauteur) -->
+    <section id="probleme-synthese" class="min-h-screen flex items-center justify-center px-6 py-24 bg-gradient-to-b from-[#0b0b0b] via-[#080808] to-[#050505]">
+        <div class="max-w-6xl w-full glass p-10 md:p-12 rounded-[3rem] border border-white/5 slide-in space-y-10">
+            <div class="text-center space-y-2">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 font-black">Problème global</p>
+                <h2 class="font-sky text-4xl md:text-6xl italic leading-tight">Skyrock perd du terrain <span class="sky-red">au profit de Twitch</span></h2>
+                <p class="opacity-70 italic text-sm max-w-3xl mx-auto">L’algorithme Twitch privilégie la présence continue, les raids et les clips courts. Sans flux H24 et sans présence actuelle sur Twitch, l’audience (jour + nuit) bascule vers les indépendants urbains, Skyrock perd les 15-24 et son statut n°1 hors radio.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6 text-sm font-bold uppercase opacity-85">
+                <div class="glass p-6 rounded-3xl border-l-4 border-sky-red">
+                    <div class="text-xs opacity-60 mb-2">Fuite</div>
+                    <div class="text-4xl font-black text-sky-red mb-1">85%</div>
+                    <div class="text-[11px] font-medium normal-case opacity-70">Audience mobile qui s’évapore 20h-4h.</div>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-twitch-purple">
+                    <div class="text-xs opacity-60 mb-2">Temps moyen</div>
+                    <div class="text-4xl font-black text-purple-300 mb-1">95 min</div>
+                    <div class="text-[11px] font-medium normal-case opacity-70">Par jour sur Twitch.</div>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-emerald-300">
+                    <div class="text-xs opacity-60 mb-2">Live-addicts</div>
+                    <div class="text-4xl font-black text-emerald-300 mb-1">82%</div>
+                    <div class="text-[11px] font-medium normal-case opacity-70">Des 15-24 consomment du live.</div>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="danger-card p-8 rounded-2xl">
+                    <h3 class="text-xl font-black italic mb-3 uppercase">Manque d’occupation H24</h3>
+                    <p class="opacity-70 text-sm italic leading-relaxed">Pas de flux continu, pas de raids, peu de clips minute 1 : la chaleur algorithme reste chez les concurrents.</p>
+                </div>
+                <div class="glass p-8 rounded-2xl border border-white/10">
+                    <h3 class="text-xl font-black italic mb-3 uppercase">Opportunité</h3>
+                    <p class="opacity-70 text-sm italic leading-relaxed">22M d’abonnés à réunir sur une seule chaîne H24 : live natif Twitch, raids systématiques, clips automatiques, cohosts premium. Objectif : récupérer la nuit, regagner les jeunes et redevenir la référence urbaine unique.</p>
+                </div>
+            </div>
+            <p class="opacity-60 italic text-sm text-center">Chaque minute sans live rend la marque invisible dans l’onglet “Live”. Occuper Twitch 24/24 (même en mode léger) = chauffer l’algorithme, capter la reco, rappeler que Skyrock est la maison du live urbain.</p>
+        </div>
+    </section>
+
+    <!-- Problème : Autorité jeunesse -->
+    <section class="min-h-screen flex items-center justify-center px-6 py-20 bg-[#0a0a0a]">
+        <div class="max-w-6xl w-full glass p-9 md:p-11 rounded-[3rem] border border-white/5 slide-in space-y-8">
+            <div class="text-center space-y-2">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 font-black">Perte d'autorité</p>
+                <h3 class="font-sky text-3xl md:text-5xl italic leading-tight">Les 15-24 ne reconnaissent plus Skyrock comme n°1 hors radio</h3>
+                <p class="opacity-70 italic text-sm max-w-3xl mx-auto">Les créateurs urbains indépendants occupent l’imaginaire live, dictent les trends TikTok/YouTube, et récupèrent l’interaction temps réel. Skyrock n’est pas la “maison du live” pour cette génération.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4 text-sm font-bold uppercase opacity-85">
+                <div class="glass p-5 rounded-2xl border-l-4 border-sky-red">Top of mind<br><span class="font-medium normal-case opacity-70">Les streams urbains indépendants sont cités en premier par les 15-24.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-twitch-purple">Temps passé<br><span class="font-medium normal-case opacity-70">95 min/jour sur Twitch vs flux FM sans interaction.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-emerald-300">Absence H24<br><span class="font-medium normal-case opacity-70">Pas de présence continue = perte de chaleur algorithme.</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problème : Algorithme vs Marque -->
+    <section class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-[#070707] to-[#050505]">
+        <div class="max-w-6xl w-full glass p-9 md:p-11 rounded-[3rem] border border-white/5 slide-in space-y-8">
+            <div class="text-center space-y-2">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-60 font-black">Algo > Branding</p>
+                <h3 class="font-sky text-3xl md:text-5xl italic leading-tight">Sans flux natif Twitch, la marque ne suffit plus</h3>
+                <p class="opacity-70 italic text-sm max-w-3xl mx-auto">L’algorithme favorise le temps réel, les raids, les clips minute 1. Skyrock reste fort en brand mais absent des signaux qui nourrissent la reco live.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4 text-sm font-bold uppercase opacity-85">
+                <div class="glass p-5 rounded-2xl border-l-4 border-sky-red">Pas de raids<br><span class="font-medium normal-case opacity-70">Peu ou pas de transferts d’audience programmés.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-twitch-purple">Clips minute 1<br><span class="font-medium normal-case opacity-70">Sans captation continue, pas de micro-contenus pour nourrir la reco.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-amber-300">Chaleur algorithme<br><span class="font-medium normal-case opacity-70">La chaleur reste chez les créateurs live natifs, pas chez la marque.</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analyse du marché / Problème / Solution 24/24 -->
+    <section id="marche" class="min-h-screen flex items-center justify-center px-6 py-16 bg-[#080808]">
+        <div class="max-w-6xl w-full glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 slide-in space-y-8">
+            <div>
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Analyse du marché</p>
+                <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">Streaming FR : bataille du <span class="sky-red">temps réel</span></h2>
+                <p class="opacity-70 italic text-sm mt-3">La reco Twitch privilégie la présence continue, l’interaction et la fraîcheur des clips courts. Les urbains FR captent les 15-24, mais Skyrock n’est pas toujours en live quand le public migre.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4 text-sm font-bold uppercase opacity-80">
+                <div class="glass p-5 rounded-2xl border-l-4 border-sky-red">Problème Skyrock<br><span class="font-medium normal-case opacity-60">22M+ d’abonnés éparpillés, pas de flux live continu, fuite vers Twitch/indépendants.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-twitch-purple">Enjeu algorithme<br><span class="font-medium normal-case opacity-60">Occuper Twitch 24/24 pour convertir les 22M en viewers fidèles.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-emerald-300">Solution 24/24<br><span class="font-medium normal-case opacity-60">Centraliser les 22M sur un flux unique Twitch : affiliés, gros primes, raids, clips courts.</span></div>
+            </div>
+            <div class="space-y-3">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Chronologie</p>
+                <div class="grid md:grid-cols-4 gap-3 text-sm font-bold uppercase opacity-80">
+                    <div class="glass p-4 rounded-2xl border-l-4 border-white/30">
+                        <div class="text-xs opacity-60 mb-1">Phase 0-1 mois</div>
+                        <div class="font-medium normal-case opacity-70">Always-on 24/7 · régie + street modules · raids planifiés.</div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">
+                        <div class="text-xs opacity-60 mb-1">Phase 1-3 mois</div>
+                        <div class="font-medium normal-case opacity-70">Prime/Late quotidiens · clips IA 25/h · SSO/Discord.</div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">
+                        <div class="text-xs opacity-60 mb-1">Phase 3-6 mois</div>
+                        <div class="font-medium normal-case opacity-70">Cohost gros streamers · drops sponsor · takeovers week-end.</div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">
+                        <div class="text-xs opacity-60 mb-1">Phase 6-12 mois</div>
+                        <div class="font-medium normal-case opacity-70">Gros events propriétaires · marketplace merch · KPIs 200-300k followers.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Audit réel : stats multi-plateformes -->
+    <section id="audit-reel" class="min-h-screen flex items-center justify-center px-6 py-16 bg-[#0b0b0b]">
+        <div class="max-w-6xl w-full glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 slide-in space-y-8">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Audit réel</p>
+                    <h2 class="font-sky text-4xl md:text-5xl italic leading-tight uppercase tracking-tighter">Force de frappe multi-plateformes</h2>
+                    <p class="opacity-70 italic text-sm mt-2">22M+ d’abonnés cumulés. Présents partout, absents du live Twitch. Enjeu : rediriger ce reach vers un flux H24 avec raids, clips minute 1 et cohosts premium.</p>
+                </div>
+                <span class="pill bg-white/10 text-white border border-white/15">Jan. 2026</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="stat-card border-l-4 border-pink-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-black text-xl uppercase">TikTok</span>
+                        <span class="pill bg-pink-500/20 text-pink-300">Leader</span>
+                    </div>
+                    <span class="block text-white font-black text-4xl mb-2">7,4 M</span>
+                    <p class="text-[11px] opacity-60 italic">Terrain de viralité urbaine. Attention au zapping, capital à convertir vers le live.</p>
+                </div>
+                <div class="stat-card border-l-4 border-white">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-black text-xl uppercase">YouTube</span>
+                        <span class="pill bg-green-500/20 text-green-300">Patrimoine</span>
+                    </div>
+                    <span class="block text-white font-black text-4xl mb-2">7,02 M</span>
+                    <p class="text-[11px] opacity-60 italic">Hub VOD (Planète Rap). Puissance historique, peu de lien H24.</p>
+                </div>
+                <div class="stat-card border-b-4 border-sky-red">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-black text-xl sky-red uppercase">Instagram</span>
+                        <span class="pill bg-sky-red/20 text-sky-red">Vibrations</span>
+                    </div>
+                    <span class="block text-sky-red font-black text-4xl mb-2">1,5 M</span>
+                    <p class="text-[11px] opacity-60 italic">Reach massif mais passif. À drainer vers le live.</p>
+                </div>
+                <div class="stat-card">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-black text-xl uppercase">X / Twitter</span>
+                        <span class="pill bg-blue-500/20 text-blue-300">Info</span>
+                    </div>
+                    <span class="block text-white font-black text-4xl mb-2">2,3 M</span>
+                    <p class="text-[11px] opacity-60 italic">Buzz et actu, manque l’immersion temps réel.</p>
+                </div>
+                <div class="stat-card opacity-85">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-black text-xl uppercase">Facebook</span>
+                        <span class="pill bg-white/10 text-white">Reach</span>
+                    </div>
+                    <span class="block text-white font-black text-4xl mb-2">3,5 M</span>
+                    <p class="text-[11px] opacity-60 italic">Masse stable, utile pour campagnes globales.</p>
+                </div>
+                <div class="stat-card border-2 border-dashed border-twitch-purple bg-twitch-purple/5">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-black text-xl text-purple-300 uppercase">Twitch</span>
+                        <span class="pill bg-purple-500 text-white">Angle mort</span>
+                    </div>
+                    <span class="block text-purple-300 font-black text-3xl mb-2">Potentiel</span>
+                    <p class="text-[11px] opacity-70 italic text-purple-200 font-bold">Le live urbain est laissé aux indépendants. Fenêtre pour régner si H24 + raids + clips courts.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problème : Twitch = flux discontinus -->
+    <section id="churn-twitch" class="min-h-screen flex items-center justify-center px-6 py-16 bg-[#070707]">
+        <div class="max-w-6xl w-full glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 slide-in space-y-8">
+            <div class="text-center space-y-2">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Problème structurel Twitch</p>
+                <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">Les créateurs entrent, sortent, et la chaleur tombe</h2>
+                <p class="opacity-70 italic text-sm max-w-3xl mx-auto">Twitch vit sur des pics : primes, raids ponctuels, rituels hebdo. Entre deux lives, l’algorithme refroidit et la reco bascule vers d’autres. Résultat : fragmentation, perte d’attention, parts de marché laissées aux indépendants ultra-présents.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4 text-sm font-bold uppercase opacity-85">
+                <div class="glass p-5 rounded-2xl border-l-4 border-sky-red">Chaleur courte<br><span class="font-medium normal-case opacity-70">Sans flux continu, chaque prime repart de zéro.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-twitch-purple">Rituels isolés<br><span class="font-medium normal-case opacity-70">Programmes hebdo sans relais H24 = audience qui fuit.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-amber-300">Reco volatiles<br><span class="font-medium normal-case opacity-70">L’algo pousse ceux qui streament maintenant, pas ceux qui “seront là demain”.</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problème : sans 24/24, impossible de dépasser -->
+    <section id="flux-constant" class="min-h-screen flex items-center justify-center px-6 py-16 bg-gradient-to-b from-[#070707] via-[#060606] to-[#050505]">
+        <div class="max-w-6xl w-full glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 slide-in space-y-8">
+            <div class="text-center space-y-2">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Pourquoi le H24 change la donne</p>
+                <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">Flux constant = parts de marché captées + statut partenaire incontournable</h2>
+                <p class="opacity-70 italic text-sm max-w-3xl mx-auto">Avec 22M de reach cumulée, un flux H24 permet d’occuper l’algorithme en permanence, de chauffer le réseau d’affiliés et de négocier en partenaire clé (“nouvelle télé” Twitch) plutôt qu’en simple chaîne radio filmée.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm font-bold uppercase opacity-85">
+                <div class="glass p-5 rounded-2xl border-l-4 border-sky-red">Occupation continue<br><span class="font-medium normal-case opacity-70">Toujours un live pour capter la reco FR (jour + nuit).</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-twitch-purple">Réseau affiliés chaud<br><span class="font-medium normal-case opacity-70">Raids sortants/entrants en boucle, clips minute 1.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-emerald-300">Monétisation stable<br><span class="font-medium normal-case opacity-70">Subs, tips, sponsors tournent 24/24, pas seulement en prime.</span></div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-amber-300">Position “nouvelle télé”<br><span class="font-medium normal-case opacity-70">Skyrock devient un partenaire stratégique de la plateforme.</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bande SOLUTION -->
+    <section class="w-full bg-[#0a0a0a] text-white text-center py-6 px-4 border-t border-b border-white/10">
+        <h2 class="font-sky text-3xl md:text-4xl italic uppercase">SOLUTION</h2>
+        <p class="text-sm md:text-base opacity-80 mt-1">H24 multiplateforme, occuper Twitch 24/24 avec créateurs affiliés + cohosts premium, raids & clips en continu.</p>
+    </section>
+
+    <!-- Slide AI LAB (émissions à la demande) -->
+    <section id="ai-lab" class="min-h-screen flex items-center justify-center px-6 py-24 bg-[#0a0a0a]">
+        <div class="max-w-4xl w-full slide-in">
+            <div class="text-center mb-12">
+                <div class="inline-block bg-twitch-purple text-white text-[10px] font-black px-4 py-1 rounded-full mb-4 ai-glow uppercase tracking-widest">
+                    Propulsé par Madara
+                </div>
+                <h2 class="font-sky text-4xl md:text-6xl mb-4 italic">LABORATOIRE DE <br><span class="sky-red">CRÉATIVITÉ ✨</span></h2>
+                <p class="opacity-50 italic">Simulez le potentiel de conversion de vos 22M de fans vers un nouveau concept Live.</p>
+            </div>
+
+            <div class="glass p-8 rounded-[3rem] border border-white/10 card-anim">
+                <div class="mb-6">
+                    <label class="block text-xs font-black uppercase tracking-widest opacity-40 mb-2">Concept ou Thématique (Ex: freestyle surprise à 2h)</label>
+                    <input id="ai-input" type="text" placeholder="Entrez un concept d'émission..." class="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white font-bold focus:border-sky-red outline-none transition-all">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <button onclick="generateAI('viral')" class="bg-white text-black font-black p-4 rounded-2xl text-[10px] uppercase hover:bg-sky-red hover:text-white transition-all flex items-center justify-center gap-2">
+                        <span>Générer un Concept Viral ✨</span>
+                    </button>
+                    <button onclick="generateAI('impact')" class="bg-twitch-purple text-white font-black p-4 rounded-2xl text-[10px] uppercase hover:opacity-80 transition-all flex items-center justify-center gap-2">
+                        <span>Score de ViralIté vs Indépendants ✨</span>
+                    </button>
+                </div>
+
+                <div id="ai-output-container" class="hidden">
+                    <div class="w-full h-px bg-white/10 mb-6"></div>
+                    <div id="ai-loading" class="flex flex-col items-center py-8 hidden">
+                        <div class="w-12 h-12 border-4 border-sky-red border-t-transparent rounded-full animate-spin"></div>
+                        <p class="mt-4 text-[10px] font-black italic animate-pulse tracking-titter uppercase opacity-50">L'IA analyse le marché urbain Twitch...</p>
+                    </div>
+                    <div id="ai-result" aria-live="polite" class="text-sm opacity-80 leading-relaxed italic bg-white/5 p-6 rounded-2xl border border-white/5"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution : Présence & Concept -->
+    <section id="presence-concept" class="min-h-screen flex items-center justify-center px-6 py-16 bg-[#060606]">
+        <div class="max-w-6xl w-full slide-in space-y-10">
+            <div class="text-center space-y-2">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Solution</p>
+                <h2 class="font-sky text-4xl md:text-6xl italic leading-tight">LA RÉPONSE : <span class="sky-red">PRÉSENCE & CONCEPT.</span></h2>
+                <p class="text-sm md:text-base opacity-80 font-black">CONVERTIR 22M D'ABONNÉS EN UNE ARMÉE DE VIEWERS H24.</p>
+            </div>
+
+            <div class="glass p-6 rounded-[2rem] border border-white/10 space-y-2">
+                <div class="pill bg-sky-red/20 text-white border border-sky-red/30">FLAGSHIP H24</div>
+                <h3 class="font-sky text-3xl md:text-4xl italic">L'ARÈNE <span class="sky-red">SKY.</span></h3>
+                <p class="opacity-70 italic text-sm">On ne filme pas la radio, on crée un lieu de vie. Freestyles improvisés à 3h du matin captés par le flux, arrivées de guests en “off”, et surtout : <strong>La Curation Collaborative</strong>. Le chat vote, influence la playlist, déclenche des exclus.</p>
+                <div class="flex gap-2 flex-wrap text-[10px] font-black uppercase opacity-70">
+                    <span class="pill bg-white/5 text-white border border-white/10">Addiction directe</span>
+                    <span class="pill bg-white/5 text-white border border-white/10">100% natif Twitch</span>
+                </div>
+                <p class="opacity-70 italic text-sm">Possibilités : arcs narratifs (sagas hebdo), quêtes du chat pour débloquer des scènes, IA pour générer des thèmes de freestyle, drops surprises liés aux pics de chat.</p>
+                <p class="opacity-60 italic text-sm">Boucle H24 : prime → raid affiliés → clips minute 1 → VOD chapitrées → retour live. L’objectif est de tenir la chaleur algo jour + nuit et de convertir les 22M vers un réflexe Twitch.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm font-bold uppercase opacity-85">
+                <div class="glass p-5 rounded-3xl border-l-4 border-amber-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>LE GRILL ✨</span>
+                        <span class="pill bg-amber-400/20 text-amber-200 border border-amber-300/30">Cuisine · Fun · Viral</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Un rappeur invité cuisine une recette imposée par les “points de chaîne” du chat. Improvisation, vannes, interaction brute.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-blue-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>LE RING 🥊</span>
+                        <span class="pill bg-blue-400/20 text-blue-200 border border-blue-300/30">Sport · Passion · Live</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">MMA, Foot, Basket débriefés sans filtre avec des athlètes en immersion. On vit le sport avec l’énergie Skyrock.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-purple-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>BOSS FINAL 🎮</span>
+                        <span class="pill bg-purple-400/20 text-purple-200 border border-purple-300/30">Gaming x Rap Hub</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">L’artiste affronte ses abonnés en direct sur les jeux cultes. Le perdant fait un freestyle improvisé sous les ordres du chat.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-emerald-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>LE CHECK 🗞️</span>
+                        <span class="pill bg-emerald-400/20 text-emerald-200 border border-emerald-300/30">Info · Réactivité · H24</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">L’actu TikTok et X décryptée en temps réel. Zéro langue de bois, l’information vue par et pour la culture urbaine.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-sky-red/70">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>MIDNIGHT CYPHER</span>
+                        <span class="pill bg-sky-red/20 text-white border border-sky-red/30">Rap · Live</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Cyphers nocturnes avec jeunes talents + guests, votés par le chat.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-indigo-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>STREET QUEST</span>
+                        <span class="pill bg-indigo-400/20 text-indigo-200 border border-indigo-300/30">IRL · Défis</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Défis urbains en ville, micro-créateurs + Sky Host, raid de sortie.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-orange-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>BEAT MAKER LIVE</span>
+                        <span class="pill bg-orange-400/20 text-orange-200 border border-orange-300/30">Prod · Créa</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Beatmakers et rappeurs co-créent en direct, le chat choisit les samples.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-cyan-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>REACT LAB</span>
+                        <span class="pill bg-cyan-300/20 text-cyan-100 border border-cyan-200/30">React · Live</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Réactions aux trends TikTok/YouTube avec rotation d’affiliés.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-fuchsia-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>CREW VS CREW</span>
+                        <span class="pill bg-fuchsia-400/20 text-fuchsia-200 border border-fuchsia-300/30">Battle · Show</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Duel d’équipes (micros + gros noms) en jeux/défis, le chat tranche.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-lime-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>HOT DROP</span>
+                        <span class="pill bg-lime-300/20 text-lime-100 border border-lime-200/30">Exclu · Flash</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Exclus musicales/annonces en live, clips instantanés pour relayer partout.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-white/40">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>SKY NIGHT SHIFT</span>
+                        <span class="pill bg-white/10 text-white border border-white/20">Late · H24</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Veille nocturne par affiliés + mods : rotation talk/IRL, raids en sortie. Maintient la chaleur algorithme.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-rose-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>PLUG SESSION</span>
+                        <span class="pill bg-rose-300/20 text-rose-100 border border-rose-200/30">Découverte</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Découverte de micro-artistes, le chat choisit qui passe en “prime incubés”.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-yellow-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>FAST NEWS</span>
+                        <span class="pill bg-yellow-400/20 text-yellow-100 border border-yellow-300/30">Actu · 10'</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Bulletin express 10 min, X/TikTok, CTA follow Twitch/Discord en fin de segment.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-gray-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>BACKSTAGE CAM</span>
+                        <span class="pill bg-gray-400/20 text-gray-100 border border-gray-300/30">Off · Live</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Cam “off” sur la régie/guests entre deux primes ; clips instantanés pour TikTok.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-green-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>BEAT MARKET</span>
+                        <span class="pill bg-green-400/20 text-green-100 border border-green-300/30">Prod · Collab</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Beatmakers vendent/échangent des prod en live ; le chat vote, artistes pick en direct.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-red-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>DEBAT RAW</span>
+                        <span class="pill bg-red-400/20 text-red-100 border border-red-300/30">Talk · Sans filtre</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Débats urbains (actu, culture) avec créateurs + chat modéré ; clips pour IG/Shorts.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-teal-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>CHILL CAM</span>
+                        <span class="pill bg-teal-300/20 text-teal-100 border border-teal-200/30">Ambient</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Flux ambiance (studio, vue ville) pour tenir la reco H24 ; CTA follow/Discord overlay.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-indigo-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>QUIZ RAP LAB</span>
+                        <span class="pill bg-indigo-300/20 text-indigo-100 border border-indigo-200/30">Quiz · Fun</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Quiz rap/culture urbaine, affi vs affi ; le chat donne les gages aux perdants.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-orange-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>STUDIO 2.0</span>
+                        <span class="pill bg-orange-300/20 text-orange-100 border border-orange-200/30">Créa · Multi</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Session multi-cams : prod, écriture, enregistrement ; le chat choisit les thèmes et déclenche les challenges.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-sky-red">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>FREESTYLE EXPRESS</span>
+                        <span class="pill bg-sky-red/20 text-white border border-sky-red/30">Rap · 10'</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Freestyles éclairs imposés par le chat, clips instantanés pour Shorts/TT.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-purple-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>OPEN MIC 24</span>
+                        <span class="pill bg-purple-300/20 text-purple-100 border border-purple-200/30">Découverte</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Slots ouverts aux affiliés maison, raid sortie systématique vers un micro-créateur.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-blue-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>TACTIC ROOM</span>
+                        <span class="pill bg-blue-300/20 text-blue-100 border border-blue-200/30">Esport · Analyse</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Débrief esport/sport avec data live, polls du chat et invités coach/joueurs.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-amber-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>STREET REPORT</span>
+                        <span class="pill bg-amber-400/20 text-amber-100 border border-amber-300/30">IRL · Terrain</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Reportages urbains courts, tournés avec affiliés, diffusés et raided vers le terrain.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-emerald-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>SKY LAB LIVE</span>
+                        <span class="pill bg-emerald-300/20 text-emerald-100 border border-emerald-200/30">Expériences</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Tests concepts (tech, IA, formats courts) en live avec feedback chat en temps réel.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-yellow-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>CAMPUS TOUR</span>
+                        <span class="pill bg-yellow-300/20 text-yellow-100 border border-yellow-200/30">IRL · Étudiants</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Lives depuis les campus, concours freestyle/quiz, recrutement d’affiliés étudiants.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-pink-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>BATTLE CLIPS</span>
+                        <span class="pill bg-pink-300/20 text-pink-100 border border-pink-200/30">Clips · Vote</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Deux clips inédits s’affrontent, le chat choisit, le perdant est remixé live.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-lime-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>SQUAD BUILD</span>
+                        <span class="pill bg-lime-400/20 text-lime-100 border border-lime-300/30">Community</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Le chat compose des équipes (musique, gaming, food) et programme leurs créneaux raids.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-red-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>DRILL STUDIO</span>
+                        <span class="pill bg-red-300/20 text-red-100 border border-red-200/30">Rap · Session</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Sessions drill guidées par le chat : thèmes imposés + feats affiliés.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-l-4 border-teal-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>FLASH NEWS HYPE</span>
+                        <span class="pill bg-teal-200/20 text-teal-900 border border-teal-200/40">Actu · Pop</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Actu culture pop/rap en 5 minutes, CTA follow/Discord, raid vers un affi qui enchaîne.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline organique H24/7 -->
+    <section id="timeline-organique" class="min-h-screen flex items-center justify-center px-6 py-16 bg-gradient-to-b from-[#060606] via-[#050505] to-[#040404]">
+        <div class="max-w-6xl w-full slide-in glass p-8 md:p-10 rounded-[3rem] border border-white/5 space-y-6">
+            <div class="text-center space-y-2">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Trajectoire organique · H24/7</p>
+                <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">Occuper Twitch <span class="sky-red">24/24</span> et convertir naturellement</h2>
+                <p class="opacity-60 italic text-sm">Une ligne chronologique simple : diffusion continue, raids programmés, clips minute 1 et rendez-vous récurrents pour chauffer l’algorithme sans paid.</p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-4 text-sm font-bold uppercase opacity-85">
+                <div class="glass card-anim p-5 rounded-2xl border-l-4 border-white/30">
+                    <div class="text-xs opacity-60 mb-1">Semaine 0-2</div>
+                    <div class="text-lg">Allumer le flux</div>
+                    <p class="font-medium normal-case opacity-70 mt-2">Live H24/7 même léger (chill cam + react). 3 raids/jour vers affiliés. 3-5 clips/jour publiés dans l’heure.</p>
+                </div>
+                <div class="glass card-anim p-5 rounded-2xl border-l-4 border-sky-red">
+                    <div class="text-xs opacity-60 mb-1">Sem. 2-6</div>
+                    <div class="text-lg">Structurer</div>
+                    <p class="font-medium normal-case opacity-70 mt-2">Grille prime/late + modules 15 min. Raids sortants systématiques. CTA Discord/Follow intégrés overlay.</p>
+                </div>
+                <div class="glass card-anim p-5 rounded-2xl border-l-4 border-twitch-purple">
+                    <div class="text-xs opacity-60 mb-1">Sem. 6-10</div>
+                    <div class="text-lg">Accélérer</div>
+                    <p class="font-medium normal-case opacity-70 mt-2">Cohosts premium hebdo. Takeovers week-end. Drops sponsor légers. Clips IA “minute 1” A/B test.</p>
+                </div>
+                <div class="glass card-anim p-5 rounded-2xl border-l-4 border-emerald-300">
+                    <div class="text-xs opacity-60 mb-1">Sem. 10-16</div>
+                    <div class="text-lg">Scaler organique</div>
+                    <p class="font-medium normal-case opacity-70 mt-2">Événements propriétaires mensuels, raids croisés, monétisation subs+sponsors partagée avec affiliés pour retenir le réseau.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-[11px] uppercase font-black opacity-70">
+                <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Objectif : chaleur algo 24/7</span>
+                <span class="bg-sky-red/20 text-white px-3 py-1 rounded-full border border-sky-red/30">No pause, toujours un flux</span>
+                <span class="bg-twitch-purple/20 text-white px-3 py-1 rounded-full border border-twitch-purple/30">Raids entrants/sortants</span>
+                <span class="bg-emerald-300/15 text-emerald-100 px-3 py-1 rounded-full border border-emerald-300/30">Clips minute 1 multiréseaux</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution : Concepts semi-récurrents -->
+    <section id="concepts-semi" class="min-h-screen flex items-center justify-center px-6 py-16 bg-[#050505]">
+        <div class="max-w-6xl w-full slide-in">
+            <div class="text-center mb-10">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Solution · formats semi-récurrents</p>
+                <h2 class="font-sky text-4xl md:text-6xl italic leading-tight">Activer la <span class="sky-red">nouvelle ère</span> Twitch</h2>
+                <p class="opacity-60 italic text-sm mt-2">Rendez-vous légers mais réguliers pour attirer micro-créateurs et audience 15-24 et nourrir le flux H24.</p>
+                <p class="opacity-60 italic text-xs mt-1">Innovations : “cartes missions” pour le chat, drops sponsor modulaires, votes pour déclencher un raid/format en temps réel.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6 text-sm font-bold uppercase opacity-85">
+                <div class="glass p-6 rounded-3xl border-l-4 border-sky-red">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>COLLAB STREET</span>
+                        <span class="pill bg-white/10 text-white border border-white/10">Hebdo</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Micro-créateurs IRL + Sky Host : 20 min de modules terrain, raid sortie vers les incubés.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-twitch-purple">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>CLIP MINUTE 1</span>
+                        <span class="pill bg-white/10 text-white border border-white/10">Daily</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Chaque live génère 3-5 clips courts publiés dans l’heure sur IG/TT/Shorts pour ramener vers Twitch.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-amber-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>LAB INVITÉS</span>
+                        <span class="pill bg-white/10 text-white border border-white/10">Bi-hebdo</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Invités rap/sport + micro-créateurs, concepts courts (jeux, défis food, quiz actu) pour mixer audiences.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-emerald-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>HUB REACT</span>
+                        <span class="pill bg-white/10 text-white border border-white/10">Quotidien</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Débrief TikTok/X en 15 min avec rotation d’affiliés ; CTA follow Twitch et Discord à chaque fin.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-pink-400">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>TAKEOVER INCUBÉS</span>
+                        <span class="pill bg-white/10 text-white border border-white/10">Week-end</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Les micro-créateurs prennent l’antenne 2h, co-hostés par un gros nom, pour tester des formats et recruter.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-white/30">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>DROPS & RAIDS</span>
+                        <span class="pill bg-white/10 text-white border border-white/10">Planifié</span>
+                    </div>
+                    <p class="font-medium normal-case opacity-70">Calendrier de raids + drops sponsor sur les affiliés pour chauffer la reco et partager la monétisation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution 24/24 + Chronologie -->
+    <section id="solution-24" class="min-h-screen flex items-center justify-center px-6 py-16 bg-gradient-to-b from-[#050505] via-[#070707] to-[#0a0a0a]">
+        <div class="max-w-6xl w-full glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 slide-in space-y-6">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                <div class="space-y-3">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Solution</p>
+                    <h3 class="font-sky text-3xl md:text-4xl italic leading-tight">H24 Multiplateforme + Créateurs</h3>
+                    <p class="opacity-70 italic text-sm">Live first : aujourd’hui Skyrock n’est pas sur Twitch, il faut construire pas à pas un flux 24/24 (captation unique, 4 formats, raids systématiques vers affiliés, cohosts premium planifiés).</p>
+                    <div class="flex gap-2 flex-wrap text-[11px] uppercase font-black opacity-70">
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Always-on 24/7</span>
+                        <span class="bg-sky-red/20 px-3 py-1 rounded-full border border-sky-red/40 text-white">Raids + clips en continu</span>
+                        <span class="bg-twitch-purple/20 px-3 py-1 rounded-full border border-twitch-purple/40 text-white">Cohosts premium</span>
+                    </div>
+                    <p class="opacity-60 italic text-sm">Innovations possibles : SSO light + rôles Discord, heatmap live des raids, modules IA pour sélectionner les meilleurs clips minute 1, A/B tests de thumbnails automatiques.</p>
+                </div>
+                <div class="bg-gradient-to-br from-sky-red/20 via-purple-500/10 to-transparent p-5 rounded-2xl border border-white/10 w-full md:w-72">
+                    <p class="text-xs uppercase font-black opacity-60 mb-3">Mini schéma</p>
+                    <div class="space-y-2 text-sm font-bold">
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-sky-red rounded-full"></span>Studio régie → Twitch H24</div>
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-twitch-purple rounded-full"></span>Chat, raids programmés</div>
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-white rounded-full"></span>Clips IA → Shorts/IG/TikTok</div>
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-amber-300 rounded-full"></span>VOD + podcast SEO</div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Chronologie</p>
+                <div class="grid md:grid-cols-4 gap-3 text-sm font-bold uppercase opacity-80">
+                    <div class="glass p-4 rounded-2xl border-l-4 border-white/30">
+                        <div class="text-xs opacity-60 mb-1">0-1 mois</div>
+                        <div class="font-medium normal-case opacity-70">Always-on 24/7 · régie + street modules · raids planifiés.</div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">
+                        <div class="text-xs opacity-60 mb-1">1-3 mois</div>
+                        <div class="font-medium normal-case opacity-70">Prime/Late quotidiens · clips IA 25/h · SSO/Discord.</div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">
+                        <div class="text-xs opacity-60 mb-1">3-6 mois</div>
+                        <div class="font-medium normal-case opacity-70">Cohost gros streamers · drops sponsor · takeovers week-end.</div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">
+                        <div class="text-xs opacity-60 mb-1">6-12 mois</div>
+                        <div class="font-medium normal-case opacity-70">Gros events propriétaires · marketplace merch.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Créateurs FR à activer -->
+    <section id="creators" class="min-h-screen flex items-center justify-center px-6 py-16 bg-black">
+        <div class="max-w-5xl w-full slide-in">
+            <h2 class="font-sky text-4xl md:text-5xl mb-6 italic text-center">TOP <span class="sky-red">Twitch FR</span> (Urbain · Gaming · Sport · Cuisine)</h2>
+            <p class="text-center opacity-60 italic mb-2 text-sm">Collectif engagé : gros noms pour les prime events, micro-créateurs incubés, nouvelle ère live pour rallier la génération Twitch.</p>
+            <p class="text-center opacity-40 italic mb-6 text-xs">Sources stats : Twitch Helix (followers + live CCV) · avatars officiels Twitch.</p>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="gotaga">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-sky-red to-purple-600" alt="avatar Gotaga" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">Gotaga</div>
+                        <div class="text-xs opacity-60">FPS / events gaming</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="squeezie">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-purple-500 to-sky-red" alt="avatar Squeezie" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">Squeezie</div>
+                        <div class="text-xs opacity-60">Variété / grand public</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="aminematue">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-amber-400 to-purple-500" alt="avatar Aminematue" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">Aminematue</div>
+                        <div class="text-xs opacity-60">IRL / sport / événements</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="kamet0">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-emerald-400 to-sky-red" alt="avatar Kameto" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">Kameto</div>
+                        <div class="text-xs opacity-60">Esport / sport</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="zerator">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-indigo-500 to-amber-500" alt="avatar ZeratoR" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">ZeratoR</div>
+                        <div class="text-xs opacity-60">Events / variété gaming</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="doigby">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-pink-500 to-purple-500" alt="avatar Doigby" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">Doigby</div>
+                        <div class="text-xs opacity-60">Sport / entertainment</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="papesan">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-lime-400 to-sky-red" alt="avatar PapeSan" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">PapeSan</div>
+                        <div class="text-xs opacity-60">Shooter / variété</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="gastronoob">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-cyan-400 to-purple-500" alt="avatar Gastronoob" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">Gastronoob</div>
+                        <div class="text-xs opacity-60">Cuisine / food live</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4" data-login="firstteam101">
+                    <img data-avatar class="w-12 h-12 rounded-full object-cover bg-gradient-to-br from-rose-500 to-orange-500" alt="avatar First Team" referrerpolicy="no-referrer" src="https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png">
+                    <div>
+                        <div class="font-black">First Team</div>
+                        <div class="text-xs opacity-60">Talk sport / NBA</div>
+                        <div class="text-xs font-bold" data-followers>—</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-[10px] opacity-40 mt-6 text-center">Sources Helix live si en ligne, sinon affichage placeholder.</p>
+        </div>
+    </section>
+    <!-- Slide 3: Le Hub Ultime - Évincer la concurrence -->
+    <section id="hub" class="min-h-screen flex items-center justify-center px-6 py-24 bg-black">
+        <div class="max-w-6xl w-full slide-in">
+            <div class="text-center mb-16">
+                <h2 class="font-sky text-5xl md:text-8xl mb-4 italic leading-tight">
+                    DEVENIR LE <br><span class="gradient-text underline decoration-8 uppercase">CENTRE DU GAME.</span>
+                </h2>
+                <p class="opacity-50 italic uppercase tracking-widest text-xs">Fusionner la légende et la technologie.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-12 mb-20">
+                <div class="glass p-10 rounded-[3rem] border-l-8 border-sky-red">
+                    <h3 class="text-3xl font-black mb-6 italic uppercase leading-none">Casser les codes <br>de la "Radio-TV"</h3>
+                    <p class="opacity-70 leading-relaxed mb-6 italic text-sm">
+                        On ne filme pas la radio. On crée un <strong>hub natif</strong>. On recrute les meilleurs streamers urbains actuels pour les associer à vos animateurs. 
+                        C’est une hybridation totale qui va rendre les lives indépendants obsolètes par manque de moyens et d'accès.
+                    </p>
+                    <ul class="space-y-3 font-bold text-xs uppercase opacity-80">
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 bg-sky-red"></span> Conversion directe des 22M cumulés (IG/TT/YT/X) vers le flux H24</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 bg-sky-red"></span> Accessibilité 24h/24 : Le studio devient un salon mondial</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 bg-sky-red"></span> 1h de Live = 25 Capsules virales générées par IA</li>
+                    </ul>
+                </div>
+
+                <div class="glass p-10 rounded-[3rem] border-l-8 border-twitch-purple">
+                    <h3 class="text-3xl font-black mb-6 italic uppercase leading-none text-purple-400">Interaction <br>Illimitée</h3>
+                    <p class="opacity-70 leading-relaxed mb-6 italic text-sm">
+                        L'addiction vient du contrôle. Le public doit pouvoir influencer le direct : votes pour les sons, défis pour les artistes, chat en régie. 
+                        Skyrock devient le seul endroit où l'on <strong>vit le rap</strong> en temps réel avec ceux qui le font.
+                    </p>
+                    <ul class="space-y-3 font-bold text-xs uppercase opacity-80">
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 bg-purple-500"></span> Gamification : Badges, Points de chaîne, Accès VIP</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 bg-purple-500"></span> Session "H24" sans filtre : Pas de "Off"</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 bg-purple-500"></span> Écarter le marché par la supériorité de l'exclu</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- PANORAMA DES CONCURRENTS TYPES -->
+            <div class="mt-24">
+                <h3 class="font-sky text-2xl mb-10 text-center opacity-30 italic">Les 10 types de flux urbains à reconquérir ou intégrer</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">01. Collectifs de Streaming Rap Indépendants</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">02. Streamers Gaming à forte culture urbaine</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">03. Talk-shows Hip-Hop Amateurs Twitch</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">04. DJs Web-Broadcasters de Flux nocturnes</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">05. Réacteurs Rap YouTube en migration Twitch</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">06. Organisateurs de Battles Live Digitaux</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">07. Émissions de découverte (UGC) sans plateforme</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">08. Podcasts Vidéo Urbains à production rapide</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">09. Influenceurs Lifestyle/Streetwear Live</div>
+                    <div class="p-6 glass rounded-2xl text-[10px] font-black text-center uppercase tracking-titter opacity-40 hover:opacity-100 hover:sky-red hover:border-sky-red transition-all">10. Web-radios Communautaires Ultra-Ciblées</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Twitch: Chiffres actuels & Objectifs -->
+    <section id="twitch-stats" class="min-h-screen flex items-center justify-center px-6 py-24 bg-[#0b0b0b]">
+        <div class="max-w-6xl w-full slide-in">
+            <h2 class="font-sky text-4xl md:text-6xl mb-12 italic">TWITCH → <span class="sky-red">CHIFFRES 2026</span> & OBJECTIFS</h2>
+            <div class="grid md:grid-cols-3 gap-6 mb-10">
+                <div class="stat-card">
+                    <span class="block text-white font-black text-3xl mb-1">~105 M</span>
+                    <span class="text-[10px] font-bold opacity-40 uppercase tracking-widest">Utilisateurs actifs mensuels (2026)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="block text-white font-black text-3xl mb-1">21,6 Md</span>
+                    <span class="text-[10px] font-bold opacity-40 uppercase tracking-widest">Heures regardées (2025)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="block text-white font-black text-3xl mb-1">~2,2 M</span>
+                    <span class="text-[10px] font-bold opacity-40 uppercase tracking-widest">Spectateurs simultanés moyens</span>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="font-black uppercase text-sm opacity-70 mb-2">Objectif 3 mois</h3>
+                    <p class="opacity-70 text-sm italic">Activer 50k (≈0,25% des 22M), 1,5k CCV moyen, >250k h vues/mois</p>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div class="h-full bg-sky-red" style="width:30%"></div></div>
+                </div>
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="font-black uppercase text-sm opacity-70 mb-2">Objectif 6-9 mois</h3>
+                    <p class="opacity-70 text-sm italic">Activer 100-150k (≈0,45-0,7% des 22M), 3-5k CCV, >800k h vues/mois</p>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div class="h-full bg-sky-red" style="width:55%"></div></div>
+                </div>
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="font-black uppercase text-sm opacity-70 mb-2">Objectif 12 mois</h3>
+                    <p class="opacity-70 text-sm italic">Activer 200-300k (≈0,9-1,3% des 22M), 7-10k CCV, 1,5-2,5M h vues/mois</p>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div class="h-full bg-sky-red" style="width:85%"></div></div>
+                </div>
+            </div>
+            <div class="mt-6 text-[10px] opacity-60 space-y-1">
+                <div>Sources:
+                    <a class="underline hover:opacity-80" href="https://www.blogdumoderateur.com/chiffres-twitch/" target="_blank" rel="noopener">Blog du Modérateur</a> ·
+                    <a class="underline hover:opacity-80" href="https://twitchtracker.com/statistics" target="_blank" rel="noopener">TwitchTracker</a> ·
+                    <a class="underline hover:opacity-80" href="https://affinco.com/fr/twitch-statistics/" target="_blank" rel="noopener">Affinco</a> ·
+                    <a class="underline hover:opacity-80" href="https://www.75secondes.fr/tech/les-chiffres-de-twitch-en-2025" target="_blank" rel="noopener">75secondes</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOCUS: Croissance & Visibilité (3 panneaux) -->
+    <section id="focus" class="min-h-screen flex items-center justify-center px-6 py-24 bg-[#0a0a0a]">
+        <div class="max-w-6xl md:max-w-7xl w-full slide-in">
+            <h2 class="font-sky text-4xl md:text-6xl mb-4 italic text-center">FOCUS <span class="sky-red">CROISSANCE</span> & VISIBILITÉ</h2>
+            <div class="text-center text-sm uppercase opacity-60 mb-2">Live Twitch FR (API Helix). Si offline, affichage mock.</div>
+            <div id="global-viewers" class="text-center text-2xl md:text-3xl font-black mb-10 opacity-90">—</div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass p-8 rounded-[2rem] min-w-[320px]">
+                    <h3 class="font-black uppercase text-sm opacity-60 mb-3">Top Lives FR (en direct)</h3>
+                    <canvas id="chartGrowth" height="260"></canvas>
+                    <p class="text-[11px] opacity-50 mt-3">Sources: Twitch Helix (language=fr).</p>
+                </div>
+                <div class="glass p-8 rounded-[2rem] min-w-[320px]">
+                    <h3 class="font-black uppercase text-sm opacity-60 mb-3">Concurrents (Followers / CCV)</h3>
+                    <canvas id="chartCompetitors" height="260"></canvas>
+                    <p class="text-[11px] opacity-50 mt-3">Followers + CCV live si online.</p>
+                </div>
+                <div class="glass p-8 rounded-[2rem] min-w-[320px]">
+                    <h3 class="font-black uppercase text-sm opacity-60 mb-3">Top Catégories FR</h3>
+                    <canvas id="chartReach" height="260"></canvas>
+                    <p class="text-[11px] opacity-50 mt-3">Répartition des viewers FR par catégorie.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slides Solution / Propagation (condensées) -->
+    <section id="propagation-compact-1" class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-[#040404] via-[#070707] to-[#0a0a0a]">
+        <div class="max-w-6xl w-full slide-in glass p-8 md:p-10 rounded-[3rem] border border-white/5">
+            <div class="flex flex-col md:flex-row gap-6 md:gap-10">
+                <div class="space-y-3 flex-1">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">24/24 · 7/7 · Always-on</p>
+                    <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">ARCHI <span class="sky-red">H24</span> MULTIPLATEFORME</h2>
+                    <p class="opacity-70 text-sm italic">Logique “Live first” : chaque minute est captée → Twitch master → déclinaisons auto (Shorts/IG/TikTok) → VOD chapitrées → audio. Algorithmiquement devant car toujours présents.</p>
+                    <div class="flex gap-2 flex-wrap text-[11px] uppercase font-black opacity-70">
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Propagation 90j</span>
+                        <span class="bg-sky-red/20 text-white px-3 py-1 rounded-full border border-sky-red/40">Always-on 24/7</span>
+                        <span class="bg-twitch-purple/20 text-white px-3 py-1 rounded-full border border-twitch-purple/40">Raids ciblés</span>
+                    </div>
+                    <div class="grid md:grid-cols-4 gap-3 text-xs md:text-sm font-bold uppercase opacity-80">
+                        <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">Hub Régie<br><span class="opacity-60 font-medium normal-case">Mix FM + cams + chat overlay</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">Twitch H24<br><span class="opacity-60 font-medium normal-case">Slots fixes + raids ciblés</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-white/30">Clips IA<br><span class="opacity-60 font-medium normal-case">25 capsules/heure → Shorts/IG</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">Podcast/VOD<br><span class="opacity-60 font-medium normal-case">Chapitrage auto + SEO</span></div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-sky-red/20 via-purple-500/10 to-transparent p-5 rounded-2xl border border-white/10 w-full md:w-72 self-start">
+                    <p class="text-xs uppercase font-black opacity-60 mb-3">Mini schéma</p>
+                    <div class="space-y-3 text-sm font-bold">
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-sky-red rounded-full"></span>Studio régie →</div>
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-twitch-purple rounded-full"></span>Twitch H24 (chat, raids)</div>
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-white rounded-full"></span>Clips IA → Shorts/IG/TikTok</div>
+                        <div class="flex items-center gap-3"><span class="w-2 h-2 bg-amber-300 rounded-full"></span>VOD + podcast SEO</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 grid md:grid-cols-3 gap-4 text-sm">
+                <div class="glass p-5 rounded-3xl border-t-4 border-sky-red relative overflow-hidden">
+                    <div class="absolute right-3 top-3 text-[10px] bg-white/10 px-2 py-1 rounded-full uppercase font-black opacity-60">Prime 20h-23h</div>
+                    <p class="font-black uppercase text-xs opacity-70 mb-1">Talk urbain + votes chat</p>
+                    <p class="opacity-75 italic">Invités exclus · push IG Stories · notif Discord · clips minute 1.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-t-4 border-twitch-purple relative overflow-hidden">
+                    <div class="absolute right-3 top-3 text-[10px] bg-white/10 px-2 py-1 rounded-full uppercase font-black opacity-60">Late 23h-02h</div>
+                    <p class="font-black uppercase text-xs opacity-70 mb-1">IRL / freestyles / réac</p>
+                    <p class="opacity-75 italic">Raids croisés FR · capter la nuit pour rester top algo.</p>
+                </div>
+                <div class="glass p-5 rounded-3xl border-t-4 border-emerald-300 relative overflow-hidden">
+                    <div class="absolute right-3 top-3 text-[10px] bg-white/10 px-2 py-1 rounded-full uppercase font-black opacity-60">Week-end events</div>
+                    <p class="font-black uppercase text-xs opacity-70 mb-1">Esport · sport · food</p>
+                    <p class="opacity-75 italic">Gros streamers esport/variety · host food · invités rap · slots week-end pour “pull” la reco.</p>
+                </div>
+            </div>
+            <div class="mt-4 text-[11px] text-center opacity-60 uppercase font-black">Hebdo : best-of clips + rediffs ciblées pour convertir les non-live.</div>
+        </div>
+    </section>
+
+    <section id="propagation-compact-2" class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-[#0b0b0b] to-[#050505]">
+        <div class="max-w-6xl w-full slide-in glass p-8 md:p-10 rounded-[3rem] border border-white/5">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Réseau d'ampli & Data</p>
+                    <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">TALENTS · BOUCLE <span class="sky-red">DATA → RETOUR</span></h2>
+                    <div class="grid md:grid-cols-2 gap-3 text-sm font-bold uppercase opacity-80">
+                        <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">
+                            Urbain/IRL
+                            <div class="mt-2 flex flex-wrap gap-2 text-[11px] font-medium normal-case opacity-70">
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Top IRL/Esport</span>
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Cohost variété</span>
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Invités surprises</span>
+                            </div>
+                        </div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">
+                            Gaming/Events
+                            <div class="mt-2 flex flex-wrap gap-2 text-[11px] font-medium normal-case opacity-70">
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Top variété</span>
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Top gaming</span>
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Top events</span>
+                            </div>
+                        </div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">
+                            Sport/Food/Brands
+                            <div class="mt-2 flex flex-wrap gap-2 text-[11px] font-medium normal-case opacity-70">
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Talk sport</span>
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Food live</span>
+                                <span class="bg-white/5 px-2 py-1 rounded-full">Sponsors food/équipement</span>
+                            </div>
+                        </div>
+                        <div class="glass p-4 rounded-2xl border border-white/10">
+                            Activation
+                            <div class="mt-2 text-[11px] font-medium normal-case opacity-70 space-y-1">
+                                <div>Co-streams · drops exclusifs</div>
+                                <div>Relais social mutuel</div>
+                                <div>Présences plateau</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-4 gap-3 text-[12px]">
+                        <div class="glass p-4 rounded-2xl border border-white/10">SSO léger / Discord<br><span class="opacity-60">Login rapide, rôles VIP chat.</span></div>
+                        <div class="glass p-4 rounded-2xl border border-white/10">Alerts & Notifs<br><span class="opacity-60">Push IG / YT / email “Live NOW”.</span></div>
+                        <div class="glass p-4 rounded-2xl border border-white/10">Clips Data<br><span class="opacity-60">UTM par capsule, A/B thumbnails.</span></div>
+                        <div class="glass p-4 rounded-2xl border border-white/10">Dashboard Temps Réel<br><span class="opacity-60">CCV, follow rate, conversion IG→Twitch.</span></div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 text-[11px] uppercase font-black opacity-70">
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Heatmap audience</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Funnels IG → Twitch</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Clips CTR</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Retention live</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">KPIs phasées</p>
+                    <h3 class="font-sky text-3xl md:text-4xl italic">Monétisation & objectifs</h3>
+                    <div class="grid gap-3 text-sm font-bold uppercase opacity-80">
+                        <div class="glass p-5 rounded-2xl border-l-4 border-white/30">
+                            <div class="text-xs opacity-60 mb-1">0-3 mois</div>
+                            <div>Activer 50k (~0,25% des 22M) · 1,5k CCV</div>
+                            <div class="font-medium normal-case opacity-60">Subs founding · tips · sponsors tests.</div>
+                            <div class="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-sky-red" style="width:16%"></div>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-2xl border-l-4 border-twitch-purple">
+                            <div class="text-xs opacity-60 mb-1">3-9 mois</div>
+                            <div>Activer 100-150k (~0,45-0,7% des 22M) · 3-5k CCV</div>
+                            <div class="font-medium normal-case opacity-60">Packs brand + naming émissions · drops exclusifs.</div>
+                            <div class="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-twitch-purple" style="width:50%"></div>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-2xl border-l-4 border-sky-red">
+                            <div class="text-xs opacity-60 mb-1">9-12 mois</div>
+                            <div>Activer 200-300k (~0,9-1,3% des 22M) · 7-10k CCV</div>
+                            <div class="font-medium normal-case opacity-60">Gros events propriétaires · marketplace merch.</div>
+                            <div class="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-sky-red" style="width:100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-[11px] opacity-60 italic">Mesures clés : follow rate par source (IG, YT, TikTok), ARPU subs+sponsors, watchtime, clics off-platform.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Créateurs internes + Prime Events -->
+    <section id="propagation-compact-3" class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-[#050505] via-[#080808] to-[#0a0a0a]">
+        <div class="max-w-6xl w-full slide-in glass p-8 md:p-10 rounded-[3rem] border border-white/5">
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="flex-1 space-y-4">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Créateurs internes</p>
+                    <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">POURQUOI <span class="sky-red">DES PETITS</span> CRÉATEURS ?</h2>
+                    <p class="opacity-70 italic text-sm">Visages maison 24/24 pour nourrir l’algorithme, attirer et mentorer des micro-créateurs, et incarner la nouvelle ère live Skyrock.</p>
+                    <div class="grid md:grid-cols-2 gap-3 text-sm font-bold uppercase opacity-80">
+                        <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">Sky Host IRL<br><span class="font-medium normal-case opacity-60">Anim twitch natifs · chat/raids/clips = réflexe</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">Sky Street Crew<br><span class="font-medium normal-case opacity-60">Modules 15 min urbains pour nourrir la reco</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">Sky Beat Lab<br><span class="font-medium normal-case opacity-60">Sessions prod/DJ, prêts à raider des talents</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-white/30">Sky Mods/CM<br><span class="font-medium normal-case opacity-60">Clip & best-of immédiats (viraux internes)</span></div>
+                    </div>
+                    <div class="text-[11px] uppercase font-black opacity-70 flex flex-wrap gap-2">
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Slots 24/7</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Budget light</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Authenticité Sky</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Clips auto</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Micro-créateurs incubés</span>
+                    </div>
+                </div>
+                <div class="flex-1 space-y-4">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Prime events</p>
+                    <h3 class="font-sky text-3xl md:text-4xl italic">COMMENT <span class="sky-red">LES GROS</span> TIRERONT L’ALGO</h3>
+                    <div class="grid gap-3 text-sm font-bold uppercase opacity-80">
+                <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">Prime hebdo cohost<br><span class="font-medium normal-case opacity-60">Top cohosts urbain/gaming en plateau 1 fois/semaine, concepts renouvelés</span><div class="h-2 bg-white/10 rounded-full overflow-hidden mt-2"><div class="h-full bg-twitch-purple" style="width:50%"></div></div></div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">Raids sortants planifiés<br><span class="font-medium normal-case opacity-60">Toujours raider un “petit Sky” après chaque prime pour faire émerger les incubés</span><div class="h-2 bg-white/10 rounded-full overflow-hidden mt-2"><div class="h-full bg-sky-red" style="width:60%"></div></div></div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-emerald-300">Week-end “Takeover”<br><span class="font-medium normal-case opacity-60">Gros events sport/esport + micro-créateurs sur des activations brandées Sky</span><div class="h-2 bg-white/10 rounded-full overflow-hidden mt-2"><div class="h-full bg-emerald-300" style="width:40%"></div></div></div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">Food x Urbain<br><span class="font-medium normal-case opacity-60">Chef food + artistes rap + jeunes talents pour des formats exclusifs</span><div class="h-2 bg-white/10 rounded-full overflow-hidden mt-2"><div class="h-full bg-amber-300" style="width:35%"></div></div></div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-white/30">Réseau massif<br><span class="font-medium normal-case opacity-60">Grands noms + micro-créateurs soudés autour de la chaîne, prêts pour les gros events.</span><div class="h-2 bg-white/10 rounded-full overflow-hidden mt-2"><div class="h-full bg-white" style="width:45%"></div></div></div>
+                    </div>
+                    <div class="text-[11px] uppercase font-black opacity-70 flex flex-wrap gap-2">
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Raids -> petits créateurs</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Drops sponsor</span>
+                        <span class="bg-white/5 px-3 py-1 rounded-full border border-white/10">Gains subs partagés</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="propagation-compact-4" class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-[#0a0a0a] via-[#060606] to-[#050505]">
+        <div class="max-w-6xl w-full slide-in glass p-8 md:p-10 rounded-[3rem] border border-white/5">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="md:col-span-2 space-y-4">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Croissance organique</p>
+                    <h2 class="font-sky text-4xl md:text-5xl italic leading-tight">UN UNIVERS <span class="sky-red">AFFILIÉ</span> QUI RALLIE L’ÉCOSYSTÈME</h2>
+                    <p class="opacity-70 italic text-sm">Affiliés Skyrock Twitch (petits internes) + alliés premium (gros) = un flux continu qui garde l’algorithme chaud et capture chaque pic de reco.</p>
+                    <div class="grid md:grid-cols-2 gap-3 text-sm font-bold uppercase opacity-80">
+                        <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">Affiliés Sky<br><span class="font-medium normal-case opacity-60">Slots quotidiens, raids entrants/sortants, bounty clips.</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">Alliés premium<br><span class="font-medium normal-case opacity-60">Prime events + drops sponsor + co-brand social.</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">Économie interne<br><span class="font-medium normal-case opacity-60">Partage subs/tips sur créneaux affiliés, primes de perf (follow rate, watchtime).</span></div>
+                        <div class="glass p-4 rounded-2xl border-l-4 border-emerald-300">Propagation auto<br><span class="font-medium normal-case opacity-60">Clips IA multi-réseaux, CTA follow Twitch, Discord roles.</span></div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">KPIs organiques</p>
+                    <div class="glass p-4 rounded-2xl border border-white/10 text-sm">
+                        <div class="font-black uppercase text-xs opacity-70 mb-2">Boucle hebdo</div>
+                        <ul class="space-y-2 font-medium normal-case opacity-80">
+                            <li>+ Raids sortants vers affiliés</li>
+                            <li>+ 3 clips/jour → Shorts/IG</li>
+                            <li>+ 1 VOD chapitrée / jour</li>
+                            <li>+ CTA Discord + SSO léger</li>
+                        </ul>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border border-white/10 text-sm">
+                        <div class="font-black uppercase text-xs opacity-70 mb-2">Croissance visée</div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs opacity-70">Followers (3 mois) <span>+50k</span></div>
+                            <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-sky-red" style="width:35%"></div></div>
+                            <div class="flex items-center justify-between text-xs opacity-70">CCV moyen <span>1.5k</span></div>
+                            <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-twitch-purple" style="width:30%"></div></div>
+                            <div class="flex items-center justify-between text-xs opacity-70">Clips vus/mois <span>5-8M</span></div>
+                            <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-amber-300" style="width:45%"></div></div>
+                        </div>
+                    </div>
+                    <div class="text-[11px] opacity-60 italic">Simplifier : une grille, des raids programmés, des affiliés maison, des alliés premium. L’organique vient des raids + clips courts + CTA systématique.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bande RÉSULTATS -->
+    <section class="w-full bg-[#0c0c0c] text-white text-center py-6 px-4 border-t border-b border-white/10">
+        <h2 class="font-sky text-3xl md:text-4xl italic uppercase">RÉSULTATS</h2>
+        <p class="text-sm md:text-base opacity-80 mt-1">Trajectoire visée, KPI phasés, timeline jusqu’à déc. 2027.</p>
+    </section>
+
+    <!-- Résultats attendus (potentiel) -->
+    <section id="resultats" class="min-h-screen flex items-center justify-center px-6 py-16 bg-[#0c0c0c]">
+        <div class="max-w-5xl w-full glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 slide-in space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Potentiel (indicatif)</p>
+                    <h2 class="font-sky text-3xl md:text-4xl italic leading-tight">Trajectoire visée</h2>
+                </div>
+                <span class="text-[11px] uppercase font-black opacity-60 bg-white/5 px-3 py-1 rounded-full border border-white/10">Madara Community · Janvier 2026</span>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4 text-sm font-bold uppercase opacity-80">
+                <div class="glass p-5 rounded-2xl border-l-4 border-sky-red">
+                    <div class="text-xs opacity-60 mb-1">0-3 mois</div>
+                    <div>Activer 50k (~0,25% des 22M) · 1,5k CCV</div>
+                    <div class="font-medium normal-case opacity-60">Founding subs · tips · tests sponsors.</div>
+                </div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-twitch-purple">
+                    <div class="text-xs opacity-60 mb-1">3-9 mois</div>
+                    <div>Activer 100-150k (~0,45-0,7% des 22M) · 3-5k CCV</div>
+                    <div class="font-medium normal-case opacity-60">Packs brand · drops exclusifs · naming.</div>
+                </div>
+                <div class="glass p-5 rounded-2xl border-l-4 border-amber-300">
+                    <div class="text-xs opacity-60 mb-1">9-12 mois</div>
+                    <div>Activer 200-300k (~0,9-1,3% des 22M) · 7-10k CCV</div>
+                    <div class="font-medium normal-case opacity-60">Events propriétaires · marketplace merch.</div>
+                </div>
+            </div>
+            <div class="text-[11px] opacity-60 italic">Estimations indicatives, dépendantes de l’exécution (grille H24, raids, cohosts, clips quotidiens, budget média). Mesure en continu : follow rate, ARPU subs+sponsors, watchtime, clics off-platform.</div>
+        </div>
+    </section>
+
+    <!-- Timeline jusqu'à déc. 2027 -->
+    <section id="timeline-2027" class="min-h-screen flex items-center justify-center px-6 py-16 bg-[#0a0a0a]">
+        <div class="max-w-6xl w-full glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 slide-in space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.2em] opacity-50 font-black">Roadmap</p>
+                    <h2 class="font-sky text-3xl md:text-4xl italic leading-tight">Jusqu'à déc. 2027</h2>
+                </div>
+                <span class="text-[11px] uppercase font-black opacity-60 bg-white/5 px-3 py-1 rounded-full border border-white/10">Projections</span>
+            </div>
+            <div class="space-y-4 text-sm font-bold uppercase opacity-80">
+                <div class="glass p-4 rounded-2xl border-l-4 border-sky-red">
+                    <div class="flex justify-between text-xs opacity-60 mb-1">
+                        <span>Jan. 2026</span><span>Base</span>
+                    </div>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-sky-red" style="width:12%"></div></div>
+                    <div class="mt-1 font-medium normal-case opacity-70">Lancement H24 · 50k followers cibles.</div>
+                </div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-twitch-purple">
+                    <div class="flex justify-between text-xs opacity-60 mb-1">
+                        <span>Juin 2026</span><span>Pivot cohosts</span>
+                    </div>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-twitch-purple" style="width:45%"></div></div>
+                    <div class="mt-1 font-medium normal-case opacity-70">180k followers · 5k CCV · drops sponsor récurrents.</div>
+                </div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-amber-300">
+                    <div class="flex justify-between text-xs opacity-60 mb-1">
+                        <span>Déc. 2026</span><span>Takeovers</span>
+                    </div>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-amber-300" style="width:70%"></div></div>
+                    <div class="mt-1 font-medium normal-case opacity-70">250k followers · 8k CCV · events propriétaires.</div>
+                </div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-emerald-300">
+                    <div class="flex justify-between text-xs opacity-60 mb-1">
+                        <span>Juin 2027</span><span>Scale</span>
+                    </div>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-emerald-400" style="width:85%"></div></div>
+                    <div class="mt-1 font-medium normal-case opacity-70">320k followers · 10k CCV · marketplace merch active.</div>
+                </div>
+                <div class="glass p-4 rounded-2xl border-l-4 border-white/60">
+                    <div class="flex justify-between text-xs opacity-60 mb-1">
+                        <span>Déc. 2027</span><span>Ambition</span>
+                    </div>
+                    <div class="h-2 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-white" style="width:100%"></div></div>
+                    <div class="mt-1 font-medium normal-case opacity-70">400k followers · 12k+ CCV · events annuels “Sky H24”.</div>
+                </div>
+            </div>
+            <div class="text-[11px] opacity-60 italic">Progression indicative, à recalibrer chaque trimestre selon follow rate, CCV, ARPU subs+sponsors, clips vus/mois.</div>
+        </div>
+    </section>
+
+    <!-- Final Slide -->
+    <section class="min-h-screen flex flex-col items-center justify-center text-center px-6 py-24 bg-sky-red text-white">
+        <div class="slide-in">
+            <h2 id="final-typing" data-text="VOTRE TRÔNE VOUS ATTEND." class="font-sky text-6xl md:text-9xl mb-8 italic tracking-titter leading-none"></h2>
+            <p class="text-2xl md:text-4xl font-black mb-12 uppercase italic leading-tight">
+                Skyrock n'est plus une radio. <br>C'est un écosystème infini. <br>Le Live H24 en est la clé.
+            </p>
+            <div class="bg-black text-white px-16 py-8 rounded-full font-black text-2xl hover:scale-110 transition-transform cursor-pointer shadow-2xl inline-block italic uppercase">
+                Déployer le Flux
+            </div>
+        </div>
+    </section>
+
+    <footer class="p-12 text-center opacity-30 text-[10px] font-bold tracking-widest uppercase italic">
+        Dossier Stratégique Confidentiel • Skyrock FM • Offensive Twitch H24 • Janvier 2026
+    </footer>
+
+    <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.slide-in').forEach(el => observer.observe(el));
+
+        // Floating logo horizontal motion on scroll
+        const skyLogoFloat = document.getElementById('sky-logo-float');
+        if (skyLogoFloat) {
+            const amp = 60; // amplitude px
+            window.addEventListener('scroll', () => {
+                const x = Math.sin(window.scrollY / 160) * amp;
+                skyLogoFloat.style.transform = `translateX(${x}px)`;
+            });
+        }
+
+        // Charts
+        function initCharts() {
+            loadLiveStats();
+        }
+        document.addEventListener('DOMContentLoaded', initCharts);
+        // Refresh charts every 2 minutes
+        document.addEventListener('DOMContentLoaded', () => {
+            setInterval(loadLiveStats, 120000);
+        });
+
+        // Gemini proxy call (backend: /api/gemini) with client fallback (file:// usage)
+        const GEMINI_KEY_FALLBACK = "AIzaSyCCFDBBdKSPUwmdNEYS7QdvoT2Bt-gm8Qk"; // fourni par l'utilisateur
+        async function callGemini(userQuery, systemPrompt) {
+            const payload = { userQuery, systemPrompt };
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const response = await fetch('/api/gemini', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('API Error');
+                    const result = await response.json();
+                    return result.text || 'Aucune réponse.';
+                } catch (e) {
+                    await new Promise(r => setTimeout(r, (i+1) * 500));
+                }
+            }
+            // Fallback direct Gemini (clé exposée côté client, à éviter en prod)
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_KEY_FALLBACK}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+                if (!response.ok) throw new Error('API Error');
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || 'Aucune réponse.';
+            } catch (e) {
+                return "Erreur de connexion.";
+            }
+        }
+
+        async function generateAI(mode) {
+            const input = document.getElementById('ai-input')?.value?.trim();
+            if (!input) return;
+            const outputContainer = document.getElementById('ai-output-container');
+            const loading = document.getElementById('ai-loading');
+            const resultDiv = document.getElementById('ai-result');
+            outputContainer.classList.remove('hidden');
+            loading.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+            let systemPrompt = '';
+            if (mode === 'viral') {
+                systemPrompt = "Tu es un expert stratégique Twitch pour Skyrock. Utilise le reach massif de 7M de fans (IG, YT, TT) et l'accès exclusif aux artistes. Propose un concept de live H24 disruptif pour évincer les petits indépendants. Donne 3 mécaniques d'engagement.";
+            } else {
+                systemPrompt = "Analyse ce concept face aux 10 types de concurrence urbaine sur Twitch. Explique pourquoi Skyrock (autorité historique + reach IG) va les balayer. Donne un score de 'Viralité Digitale' sur 100.";
+            }
+            const response = await callGemini(`Concept : ${input}`, systemPrompt);
+            loading.classList.add('hidden');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerText = response;
+        }
+
+        // Live stats from backend
+        let chartTopStreams, chartCompetitors, chartCategories;
+        async function loadLiveStats() {
+            const competitors = ['nrj', 'funradio', 'mouv', 'radiofg', 'generationsfm', 'booskap'];
+            const creators = ['gotaga', 'squeezie', 'aminematue', 'kamet0', 'zerator', 'doigby', 'papesan', 'gastronoob', 'firstteam101'];
+            try {
+                const allLogins = Array.from(new Set([...competitors, ...creators]));
+                const r = await fetch('/api/twitch-stats?competitors=' + allLogins.join(','));
+                if (!r.ok) throw new Error('stats error');
+                const data = await r.json();
+
+                const streams = data.topStreams || [];
+                const games = data.topGames || [];
+                const comps = data.competitors || {};
+                const totalViewers = data.totalViewers || streams.reduce((sum, s) => sum + (s.viewer_count || 0), 0);
+                const fetchedAt = data.fetched_at;
+
+                renderCharts(streams, comps, games, competitors, totalViewers, fetchedAt);
+                renderCreators(comps, creators);
+
+            } catch (e) {
+                console.warn('Live stats error, showing mock data', e);
+                const mockStreams = [
+                    { user_name: 'JustChatting_FR', viewer_count: 22000 },
+                    { user_name: 'GTA_FR', viewer_count: 18000 },
+                    { user_name: 'Valorant_FR', viewer_count: 9500 },
+                    { user_name: 'League_FR', viewer_count: 8200 },
+                    { user_name: 'Fortnite_FR', viewer_count: 6100 },
+                ];
+                const mockComps = {
+                    nrj: { followers: 60000, viewer_count: 2000, url: 'https://twitch.tv/nrj', profile_image_url: 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png' },
+                    funradio: { followers: 45000, viewer_count: 1500, url: 'https://twitch.tv/funradio', profile_image_url: 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png' },
+                    mouv: { followers: 25000, viewer_count: 800, url: 'https://twitch.tv/mouv', profile_image_url: 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png' },
+                    radiofg: { followers: 35000, viewer_count: 900, url: 'https://twitch.tv/radiofg', profile_image_url: 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png' },
+                    generationsfm: { followers: 18000, viewer_count: 400, url: 'https://twitch.tv/generationsfm', profile_image_url: 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png' },
+                    booskap: { followers: 12000, viewer_count: 300, url: 'https://twitch.tv/booskap', profile_image_url: 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png' },
+                };
+                const mockGames = [
+                    { name: 'Just Chatting', viewers: 55000 },
+                    { name: 'GTA V', viewers: 32000 },
+                    { name: 'Valorant', viewers: 21000 },
+                    { name: 'League of Legends', viewers: 18000 },
+                    { name: 'Fortnite', viewers: 12000 },
+                ];
+                const totalViewers = mockStreams.reduce((sum, s) => sum + (s.viewer_count || 0), 0);
+                renderCharts(mockStreams, mockComps, mockGames, competitors, totalViewers, 'mock');
+                renderCreators(mockComps, creators);
+            }
+        }
+
+        function renderCharts(streams, comps, games, competitors, totalViewers, fetchedAt) {
+            const gv = document.getElementById('global-viewers');
+            if (gv) {
+                const formatted = new Intl.NumberFormat('fr-FR').format(totalViewers);
+                const ts = fetchedAt && fetchedAt !== 'mock' ? new Date(fetchedAt) : null;
+                const tsText = ts ? ` · MAJ ${ts.toLocaleTimeString('fr-FR')}` : ' · mock offline';
+                animateNumber(gv, totalViewers, `≈ {val} viewers FR connectés${tsText}`);
+            }
+
+            // Top streams chart
+            const ctxStreams = document.getElementById('chartGrowth');
+            if (ctxStreams) {
+                if (chartTopStreams) chartTopStreams.destroy();
+                chartTopStreams = new Chart(ctxStreams, {
+                    type: 'bar',
+                    data: {
+                        labels: streams.map(s => s.user_name || s.user_login || ''),
+                        datasets: [{
+                            label: 'Viewers',
+                            data: streams.map(s => s.viewer_count || 0),
+                            backgroundColor: '#ed1c24'
+                        }]
+                    },
+                    options: {
+                        plugins: { legend: { display: false } },
+                        scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+                    }
+                });
+            }
+
+            // Competitors chart
+            const ctxComp = document.getElementById('chartCompetitors');
+            if (ctxComp) {
+                if (chartCompetitors) chartCompetitors.destroy();
+                const labels = competitors.map(c => c);
+                const followers = labels.map(l => comps[l]?.followers ? comps[l].followers/1000 : 0);
+                const ccv = labels.map(l => comps[l]?.viewer_count ? comps[l].viewer_count/1000 : 0);
+                chartCompetitors = new Chart(ctxComp, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'Followers (k)', data: followers, backgroundColor: '#ed1c24' },
+                            { label: 'CCV live (k)', data: ccv, backgroundColor: '#9146ff' }
+                        ]
+                    },
+                    options: {
+                        plugins: { legend: { labels: { color: '#ddd' } } },
+                        scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + 'k' } } }
+                    }
+                });
+            }
+
+            // Categories chart
+            const ctxCat = document.getElementById('chartReach');
+            if (ctxCat) {
+                if (chartCategories) chartCategories.destroy();
+                chartCategories = new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: games.map(g => g.name),
+                        datasets: [{
+                            label: 'Viewers',
+                            data: games.map(g => g.viewers || 0),
+                            backgroundColor: games.map((_, i) => i % 2 ? '#ed1c24' : '#9146ff')
+                        }]
+                    },
+                    options: {
+                        plugins: { legend: { labels: { color: '#ddd' } } }
+                    }
+                });
+            }
+        }
+
+        function animateNumber(el, target, template) {
+            const duration = 700;
+            const start = performance.now();
+            const from = 0;
+            function frame(now) {
+                const p = Math.min(1, (now - start) / duration);
+                const val = Math.round(from + (target - from) * p);
+                el.textContent = template.replace('{val}', new Intl.NumberFormat('fr-FR').format(val));
+                if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
+
+        function renderCreators(comps, creators) {
+            const cards = document.querySelectorAll('#creators [data-login]');
+            const placeholder = 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/default-profile_image-70x70.png';
+            cards.forEach(card => {
+                const login = card.getAttribute('data-login');
+                const stats = comps[login];
+                const fEl = card.querySelector('[data-followers]');
+                const av = card.querySelector('[data-avatar]');
+                if (stats && typeof stats.followers === 'number') {
+                    fEl.textContent = Intl.NumberFormat('fr-FR').format(stats.followers) + ' followers';
+                } else {
+                    fEl.textContent = '—';
+                }
+                if (av) {
+                    if (stats && stats.profile_image_url) {
+                        av.src = stats.profile_image_url;
+                    } else {
+                        av.src = placeholder;
+                    }
+                    av.onerror = () => { av.src = placeholder; };
+                }
+                // rendre les cartes cliquables vers la page Twitch
+                const url = (stats && stats.url) ? stats.url : `https://twitch.tv/${login}`;
+                card.classList.add('cursor-pointer');
+                card.setAttribute('title', url);
+                card.onclick = () => window.open(url, '_blank', 'noopener');
+            });
+        }
+
+        // Typewriter effect for final heading (starts when final section enters viewport)
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('final-typing');
+            if (!el) return;
+            const fullText = el.dataset.text || el.textContent || '';
+            el.textContent = '';
+            const caret = document.createElement('span');
+            caret.className = 'typing-caret';
+            caret.textContent = '|';
+            el.appendChild(caret);
+            let typed = false;
+            const delay = 45;
+            const type = () => {
+                let i = 0;
+                const step = () => {
+                    if (i < fullText.length) {
+                        caret.before(document.createTextNode(fullText[i]));
+                        i += 1;
+                        setTimeout(step, delay);
+                    } else {
+                        caret.classList.add('blink');
+                    }
+                };
+                step();
+            };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !typed) {
+                        typed = true;
+                        type();
+                        observer.disconnect();
+                    }
+                });
+            }, { threshold: 0.35 });
+            observer.observe(el);
+        });
+
+        // Rail latéral dynamique (Problème / Solution / Résultats)
+        (() => {
+            const labelEl = document.getElementById('rail-label');
+            const markers = {
+                probleme: document.querySelector('.rail-marker.probleme'),
+                solution: document.querySelector('.rail-marker.solution'),
+                resultats: document.querySelector('.rail-marker.resultats'),
+            };
+            if (!labelEl || !markers.probleme) return;
+
+            const groups = [
+                { key: 'PROBLÈME', className: 'probleme', sections: ['probleme-synthese','marche','audit-reel','churn-twitch','flux-constant','focus'] },
+                { key: 'SOLUTION', className: 'solution', sections: ['ai-lab','presence-concept','timeline-organique','concepts-semi','solution-24','hub','propagation-compact-1','propagation-compact-2','propagation-compact-3','propagation-compact-4'] },
+                { key: 'RÉSULTATS', className: 'resultats', sections: ['twitch-stats','resultats','timeline-2027'] },
+            ];
+
+            const sectionMap = new Map();
+            groups.forEach(g => g.sections.forEach(id => sectionMap.set(id, g)));
+
+            const observer = new IntersectionObserver((entries) => {
+                let activeGroup = null;
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const g = sectionMap.get(entry.target.id);
+                        if (g) activeGroup = g;
+                    }
+                });
+                if (!activeGroup) return;
+                labelEl.textContent = activeGroup.key;
+                labelEl.classList.remove('fade');
+                Object.values(markers).forEach(m => m && m.classList.remove('active'));
+                if (markers[activeGroup.className]) markers[activeGroup.className].classList.add('active');
+                // légère respiration pour le texte
+                setTimeout(() => labelEl.classList.add('fade'), 900);
+            }, { threshold: 0.42 });
+
+            sectionMap.forEach((_, id) => {
+                const el = document.getElementById(id);
+                if (el) observer.observe(el);
+            });
+        })();
+    </script>
+</body>
+</html>

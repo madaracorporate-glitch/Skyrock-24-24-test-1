@@ -1,0 +1,118 @@
+    <!-- Twitch: Chiffres actuels & Objectifs -->
+    <section id="twitch-stats" class="min-h-screen flex items-center justify-center px-6 py-24 bg-[#0b0b0b]">
+        <div class="max-w-6xl w-full slide-in">
+            <h2 class="font-sky text-4xl md:text-6xl mb-12 italic">TWITCH → <span class="sky-red">CHIFFRES 2024/2025</span> & OBJECTIFS</h2>
+            <div class="grid md:grid-cols-3 gap-6 mb-10">
+                <div class="stat-card">
+                    <span class="block text-white font-black text-3xl mb-1">~105 M</span>
+                    <span class="text-[10px] font-bold opacity-40 uppercase tracking-widest">Utilisateurs actifs mensuels (2025)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="block text-white font-black text-3xl mb-1">21,6 Md</span>
+                    <span class="text-[10px] font-bold opacity-40 uppercase tracking-widest">Heures regardées (2024)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="block text-white font-black text-3xl mb-1">~2,2 M</span>
+                    <span class="text-[10px] font-bold opacity-40 uppercase tracking-widest">Spectateurs simultanés moyens</span>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="font-black uppercase text-sm opacity-70 mb-2">Objectif 3 mois</h3>
+                    <p class="opacity-70 text-sm italic">50k followers Twitch FR, 1,5k CCV moyen, >250k h vues/mois</p>
+                </div>
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="font-black uppercase text-sm opacity-70 mb-2">Objectif 6-9 mois</h3>
+                    <p class="opacity-70 text-sm italic">100-150k followers, 3-5k CCV, >800k h vues/mois</p>
+                </div>
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="font-black uppercase text-sm opacity-70 mb-2">Objectif 12 mois</h3>
+                    <p class="opacity-70 text-sm italic">200-300k followers, 7-10k CCV, 1,5-2,5M h vues/mois</p>
+                </div>
+            </div>
+            <p class="text-[10px] opacity-30 mt-6">Sources: Blog du Modérateur, TwitchTracker (2024-2025).</p>
+        </div>
+    </section>
+
+    <!-- Concurrents directs sur Twitch -->
+    <section id="competitors" class="min-h-screen flex items-center justify-center px-6 py-24 bg-black">
+        <div class="max-w-6xl w-full slide-in">
+            <h2 class="font-sky text-4xl md:text-6xl mb-12 italic">CONCURRENTS <span class="sky-red">DIRECTS TWITCH</span></h2>
+            <p class="opacity-60 italic text-sm mb-8">Statistiques remplies automatiquement via l’API Twitch (si endpoint configuré). Sinon, placeholders.</p>
+            <div id="competitor-grid" class="grid md:grid-cols-2 gap-6">
+                <div class="glass p-6 rounded-3xl flex items-center justify-between" data-login="nrj">
+                    <div>
+                        <h3 class="font-black uppercase text-sm">NRJ</h3>
+                        <p class="opacity-50 text-xs">Radio généraliste / hits</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black" data-follows>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">Followers</div>
+                        <div class="text-sm font-black mt-2" data-ccv>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">CCV / Live</div>
+                    </div>
+                </div>
+                <div class="glass p-6 rounded-3xl flex items-center justify-between" data-login="funradio">
+                    <div>
+                        <h3 class="font-black uppercase text-sm">Fun Radio</h3>
+                        <p class="opacity-50 text-xs">Dance / événements</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black" data-follows>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">Followers</div>
+                        <div class="text-sm font-black mt-2" data-ccv>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">CCV / Live</div>
+                    </div>
+                </div>
+                <div class="glass p-6 rounded-3xl flex items-center justify-between" data-login="mouv">
+                    <div>
+                        <h3 class="font-black uppercase text-sm">Mouv' (Radio France)</h3>
+                        <p class="opacity-50 text-xs">Hip-hop / cultures urbaines</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black" data-follows>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">Followers</div>
+                        <div class="text-sm font-black mt-2" data-ccv>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">CCV / Live</div>
+                    </div>
+                </div>
+                <div class="glass p-6 rounded-3xl flex items-center justify-between" data-login="radiofg">
+                    <div>
+                        <h3 class="font-black uppercase text-sm">Radio FG</h3>
+                        <p class="opacity-50 text-xs">Électro / DJ sets</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black" data-follows>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">Followers</div>
+                        <div class="text-sm font-black mt-2" data-ccv>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">CCV / Live</div>
+                    </div>
+                </div>
+                <div class="glass p-6 rounded-3xl flex items-center justify-between" data-login="generationsfm">
+                    <div>
+                        <h3 class="font-black uppercase text-sm">Générations</h3>
+                        <p class="opacity-50 text-xs">100% hip-hop</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black" data-follows>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">Followers</div>
+                        <div class="text-sm font-black mt-2" data-ccv>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">CCV / Live</div>
+                    </div>
+                </div>
+                <div class="glass p-6 rounded-3xl flex items-center justify-between" data-login="booskap">
+                    <div>
+                        <h3 class="font-black uppercase text-sm">Booska-P</h3>
+                        <p class="opacity-50 text-xs">Média rap</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black" data-follows>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">Followers</div>
+                        <div class="text-sm font-black mt-2" data-ccv>—</div>
+                        <div class="text-[10px] opacity-50 uppercase">CCV / Live</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-[10px] opacity-30 mt-6">Astuce: déployez avec un endpoint Vercel/Netlify pour activer les chiffres en direct.</p>
+        </div>
+    </section>
